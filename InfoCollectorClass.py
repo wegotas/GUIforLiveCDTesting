@@ -56,21 +56,31 @@ class InfoCollectorClass:
         self.mouse = InfoHolderClass("Mouse", "")
         self.sound = InfoHolderClass("Sound", "")
         self.cdrom = InfoHolderClass("CD-ROM", "")
-        self.battery = InfoHolderClass("Battery", self.get_battery())
         self.hdd_cover = InfoHolderClass("HDD Cover", "")
         self.ram_cover = InfoHolderClass("RAM Cover", "")
         self.other = InfoHolderClass("Other", "")
         self.tester = InfoHolderClass("Tester", "")
-        self.bios = InfoHolderClass("BIOS", "bios placeholder")
+        self.comouter_type = InfoHolderClass("Computer type", "")
+        self.bios = InfoHolderClass("BIOS", "N/A")
         hdd_serial1, hdd_serial2, hdd_serial3 = self.get_hdd_serials()
         self.hdd_serial1 = InfoHolderClass('hdd_serial1', hdd_serial1)
         self.hdd_serial2 = InfoHolderClass('hdd_serial2', hdd_serial2)
         self.hdd_serial3 = InfoHolderClass('hdd_serial3', hdd_serial3)
-        print(self.hdd_serial1.toString())
-        print(self.hdd_serial2.toString())
-        print(self.hdd_serial3.toString())
         self.motherboard_serial = InfoHolderClass('motherboard_serial', self.get_motherboard_serial())
-        print(self.motherboard_serial.toString())
+        ram_serial_list = self.get_ram_serials()
+        self.ram_serial1 = InfoHolderClass('ram_serial1', ram_serial_list[0])
+        self.ram_serial2 = InfoHolderClass('ram_serial2', ram_serial_list[1])
+        self.ram_serial3 = InfoHolderClass('ram_serial3', ram_serial_list[2])
+        self.ram_serial4 = InfoHolderClass('ram_serial4', ram_serial_list[3])
+        self.ram_serial5 = InfoHolderClass('ram_serial5', ram_serial_list[4])
+        self.ram_serial6 = InfoHolderClass('ram_serial6', ram_serial_list[5])
+        bt1_wear, bt1_expected_time, bt1_serial, bt2_wear, bt2_expected_time, bt2_serial = self.get_batteries_info()
+        self.bat1_wear = InfoHolderClass('Bat1 wear', str(bt1_wear))
+        self.bat1_expected_time = InfoHolderClass('Bat1 expected time', bt1_expected_time)
+        self.bat1_serial = InfoHolderClass('Bat1 serial', bt1_serial)
+        self.bat2_wear = InfoHolderClass('Bat2 wear', str(bt2_wear))
+        self.bat2_expected_time = InfoHolderClass('Bat2 expected time', bt2_expected_time)
+        self.bat2_serial = InfoHolderClass('Bat2 serial', bt2_serial)
 
 
 
@@ -109,6 +119,24 @@ class InfoCollectorClass:
         pattern2 = re.compile(b'DDR[0-9]+')
         result2 = re.findall(pattern2, variable)[0].decode('utf-8')
         return result1 + " " + result2
+
+    def get_ram_serials(self):
+        ram_serial_list = []
+        output = subprocess.check_output(['sudo', 'lshw', '-C', 'memory'])
+        pattern = re.compile(b'serial:.*')
+        result = re.findall(pattern, output)
+        for i in range(6):
+            if i < len(result):
+                ram_serial_list.append(self.process_serial_ramstring(result[i]))
+            else:
+                ram_serial_list.append('N/A')
+        return ram_serial_list
+
+    def process_serial_ramstring(self, ramstring):
+        if b'empty' in ramstring.lower():
+            return 'N/A'
+        else:
+            return ramstring.decode('utf-8').split(':')[1].strip()
 
     def get_gpu(self, title):
         variable = subprocess.check_output(["lspci"])
@@ -217,31 +245,45 @@ class InfoCollectorClass:
         result = re.findall(pattern, output)
         return result[0].decode('utf-8').split(':')[1].strip()
 
-    def get_battery(self):
+    def get_batteries_info(self):
+        bat1_wear = 'N/A'
+        bat2_wear = 'N/A'
+        bat1_expected_time = 'N/A'
+        bat2_expected_time = 'N/A'
+        bat1_serial = 'N/A'
+        bat2_serial = 'N/A'
+        output = subprocess.check_output(['upower', '-e'])
+        pattern = re.compile(b'.*batt.*')
+        result = re.findall(pattern, output)
+        if len(result) > 0:
+            bat1_wear, bat1_expected_time, bat1_serial = self.process_battery(result[0])
+        if len(result) > 1:
+            bat2_wear, bat2_expected_time, bat2_serial = self.process_battery(result[1])
+        return bat1_wear, bat1_expected_time, bat1_serial, bat2_wear, bat2_expected_time, bat2_serial
+
+    def process_battery(self, battery):
+        output = subprocess.check_output(['upower', '-i', battery])
+        capacity_pat = re.compile(b'([0-9]*[\.\,]?[0-9]*?%)')
+        capacity = re.findall(capacity_pat, output)[1].decode('utf-8').replace("\n", "")
+        wear = 100 - float(capacity.replace("%", "").replace(",", "."))
+        expected_time = 'N/A'
+        if wear < 36:
+            expected_time = "~1h."
+        elif wear < 60:
+            expected_time = '~40min.'
+        elif wear < 90:
+            expected_time = '~30min.'
+        elif wear <= 100:
+            expected_time = "Does not hold charge"
+        else:
+            expected_time = "Wear out is wrong. Can't determine expected time"
+        serial_pat = re.compile(b'.*serial.*')
+        serial_string = re.findall(serial_pat, output)
+        serial = serial_string[0].decode('utf-8').split(':')[1].strip()
         if "hp" in self.manufacturer.get_value().lower():
-            return "HP battery info N/A"
-        output = subprocess.check_output(["upower", "-e"])
-        battery_pat = re.compile(b'(?:^|\\n).*battery.*(?:$|\\n)')
-        battery_try = re.findall(battery_pat, output)
-        if battery_try:
-            battery = battery_try[0].decode('utf-8').replace("\n", "")
-            output2 = subprocess.check_output(["upower", "-i", battery])
-            capacity_pat = re.compile(b'([0-9]*[\.\,]?[0-9]*?%)')
-            capacity_group = re.findall(capacity_pat, output2)
-            health = float(capacity_group[1].decode('utf-8').replace("%", "").replace(",", "."))
-            if health < 10:
-                return "Does not hold charge"
-            elif health < 40:
-                return "~30 min."
-            elif health < 64:
-                return "~40 min."
-            elif health <= 100:
-                return "~1 h."
-            else:
-                return "Value does not conform to provided rules: " + str(
-                    100 - round(float(capacity_group[1].decode('utf-8').replace("%", "").replace(",", ".")), 2)
-                )+"%"
-        return "N/A"
+            wear = "HP battery wear is unreliable"
+            expected_time = "HP expected battery operation time is unreliable"
+        return wear, expected_time, serial
 
     def replace_strings(self, title, string):
         unwanted_strings = []
@@ -260,7 +302,29 @@ class InfoCollectorClass:
         return re.sub(' +', ' ', string.strip())
 
     def send_dict(self, dict):
+        dict[self.motherboard_serial.get_title()] = self.motherboard_serial.get_value()
+
+        dict[self.hdd_serial1.get_title()] = self.hdd_serial1.get_value()
+        dict[self.hdd_serial2.get_title()] = self.hdd_serial2.get_value()
+        dict[self.hdd_serial3.get_title()] = self.hdd_serial3.get_value()
+
+        dict[self.ram_serial1.get_title()] = self.ram_serial1.get_value()
+        dict[self.ram_serial2.get_title()] = self.ram_serial2.get_value()
+        dict[self.ram_serial3.get_title()] = self.ram_serial3.get_value()
+        dict[self.ram_serial4.get_title()] = self.ram_serial4.get_value()
+        dict[self.ram_serial5.get_title()] = self.ram_serial5.get_value()
+        dict[self.ram_serial6.get_title()] = self.ram_serial6.get_value()
+
+        dict[self.bat1_wear.get_title()] = self.bat1_wear.get_value()
+        dict[self.bat1_expected_time.get_title()] = self.bat1_expected_time.get_value()
+        dict[self.bat1_serial.get_title()] = self.bat1_serial.get_value()
+        dict[self.bat2_wear.get_title()] = self.bat2_wear.get_value()
+        dict[self.bat2_expected_time.get_title()] = self.bat2_expected_time.get_value()
+        dict[self.bat2_serial.get_title()] = self.bat2_serial.get_value()
+
+
         json_data = json.dumps(dict)
+        print(json_data)
         r = requests.post('http://192.168.8.132:8000/data/', json_data)
         print("Status code: "+str(r.status_code))
         print("Reason: "+str(r.reason))
@@ -288,7 +352,7 @@ class InfoCollectorClass:
             self.mouse,
             self.sound,
             self.cdrom,
-            self.battery,
+            self.bat1_expected_time,
             self.hdd_cover,
             self.ram_cover,
             self.tester,

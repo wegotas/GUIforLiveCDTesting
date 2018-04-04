@@ -12,6 +12,7 @@ class App:
     license_value = None
     camera_value = None
     tester_value = None
+    computer_type = None
 
     def __init__(self, master):
         upperframe = Frame(master)
@@ -59,7 +60,7 @@ class App:
         self.form_GUI_object(middleframe, infocollector.mouse, 0, 8, textbox_width=40)
         self.form_GUI_object(middleframe, infocollector.sound, 1, 0, textbox_width=40)
         self.form_GUI_object(middleframe, infocollector.cdrom, 1, 2, textbox_width=40)
-        self.form_GUI_object(middleframe, infocollector.battery, 1, 4, textbox_width=40)
+        self.form_GUI_object(middleframe, infocollector.bat1_expected_time, 1, 4, textbox_width=40)
         self.form_GUI_object(middleframe, infocollector.hdd_cover, 1, 6, textbox_width=40)
         self.form_GUI_object(middleframe, infocollector.ram_cover, 1, 8, textbox_width=40)
 
@@ -207,14 +208,27 @@ class App:
         label.pack()
         text = Text(toplevel, height=1, width=20)
         text.pack()
-        button = Button(toplevel, text="Send data", command=lambda: self.set_tester(text.get("1.0", "end-1c").rstrip(), toplevel))
+        label = Label(toplevel, text="Choose computer type:", fg="blue")
+        label.pack()
+        stringvar = StringVar()
+        option_menu = OptionMenu(toplevel, stringvar, "stationary", "laptop")
+        option_menu.pack()
+        button = Button(toplevel, text="Send data", command=lambda: self.set_tester(text.get("1.0", "end-1c").rstrip(), stringvar, toplevel))
         button.pack()
 
-    def set_tester(self, tester, popup):
+    def set_tester(self, tester, stringvar, popup):
         popup.destroy()
-        if tester == "":
+        # print("stringvar")
+        # print(stringvar.get())
+        # var = stringvar.get()
+        if tester == "" and stringvar.get() == "":
+            self.warning_popup("Neither employee identity was entered, nor  computer type selected")
+        elif tester == "":
             self.warning_popup("No employee tab no. entered")
+        elif stringvar.get() == "":
+            self.warning_popup("No computer type was selected")
         else:
+            self.computer_type = stringvar.get()
             self.tester_value = tester
             self.form_finishing_data_dict()
 
@@ -227,6 +241,7 @@ class App:
         self.finishing_data_dict["License"] = self.license_value
         self.finishing_data_dict["Camera"] = self.camera_value
         self.finishing_data_dict["Tester"] = self.tester_value
+        self.finishing_data_dict["Computer type"] = self.computer_type
         request = infocollector.send_dict(self.finishing_data_dict)
         if request.status_code == 200:
             self.succesful(request.content)

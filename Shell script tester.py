@@ -186,7 +186,7 @@ result = re.findall(pattern, output)
 print(result)
 print(result[0].decode('utf-8').split(':')[1].strip())
 """
-
+"""
 def process_ramstring(ramstring):
     if b'empty' in ramstring.lower():
         return 'N/A'
@@ -208,3 +208,43 @@ for i in range(6):
         ram_serial_list.append('N/A')
 
 print(ram_serial_list)
+"""
+
+bat1_wear = 'N/A'
+bat2_wear = 'N/A'
+bat1_expected_time = 'N/A'
+bat2_expected_time = 'N/A'
+bat1_serial = 'N/A'
+bat2_serial = 'N/A'
+
+def process_battery(battery):
+    output = subprocess.check_output(['upower', '-i', battery])
+    capacity_pat = re.compile(b'([0-9]*[\.\,]?[0-9]*?%)')
+    capacity = re.findall(capacity_pat, output)[1].decode('utf-8').replace("\n", "")
+    wear = 100 - float(capacity.replace("%", "").replace(",", "."))
+    expected_time = 'N/A'
+    if wear < 36:
+        expected_time = "~1h."
+    elif wear < 60:
+        expected_time = '~40min.'
+    elif wear < 90:
+        expected_time = '~30min.'
+    elif wear <= 100:
+        expected_time = "Does not hold charge"
+    else:
+        expected_time = "Wear out is wrong. Can't determine expected time"
+    serial_pat = re.compile(b'.*serial.*')
+    serial_string = re.findall(serial_pat, output)
+    serial = serial_string[0].decode('utf-8').split(':')[1].strip()
+    return wear, expected_time, serial
+
+
+output = subprocess.check_output(['upower', '-e'])
+pattern = re.compile(b'.*batt.*')
+result = re.findall(pattern, output)
+if len(result) > 0:
+    bat1_wear, bat1_expected_time, bat1_serial = process_battery(result[0])
+print(str(bat1_wear) +' '+ str(bat1_expected_time) +' '+ str(bat1_serial))
+if len(result) > 1:
+    bat2_wear, bat2_expected_time, bat2_serial = process_battery(result[1])
+print(str(bat2_wear) +' '+ str(bat2_expected_time) +' '+ str(bat2_serial))
