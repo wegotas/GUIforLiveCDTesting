@@ -248,7 +248,7 @@ class App:
         else:
             self.warning_popup(request.content)
 
-    def succesful(self,text):
+    def succesful(self, text):
         toplevel = Toplevel()
         label = Label(toplevel, text=text, fg="green", font="bold")
         label.pack(side=TOP)

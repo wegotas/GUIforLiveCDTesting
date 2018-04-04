@@ -49,6 +49,8 @@ class InfoCollectorClass:
         self.category = InfoHolderClass("Category", display_dict['category'])
         self.license = InfoHolderClass("License", "")
         self.camera = InfoHolderClass("Camera", "")
+
+        self.get_data_from_server()
         self.cover = InfoHolderClass("Cover", "")
         self.display = InfoHolderClass("Display", "")
         self.bezel = InfoHolderClass("Bezel", "")
@@ -59,6 +61,7 @@ class InfoCollectorClass:
         self.hdd_cover = InfoHolderClass("HDD Cover", "")
         self.ram_cover = InfoHolderClass("RAM Cover", "")
         self.other = InfoHolderClass("Other", "")
+
         self.tester = InfoHolderClass("Tester", "")
         self.comouter_type = InfoHolderClass("Computer type", "")
         self.bios = InfoHolderClass("BIOS", "N/A")
@@ -82,7 +85,17 @@ class InfoCollectorClass:
         self.bat2_expected_time = InfoHolderClass('Bat2 expected time', bt2_expected_time)
         self.bat2_serial = InfoHolderClass('Bat2 serial', bt2_serial)
 
-
+    def get_data_from_server(self):
+        request_dict = {}
+        request_dict[self.serial.get_title()] = self.serial.get_value()
+        print(request_dict)
+        json_dump = json.dumps(request_dict)
+        print(json_dump)
+        response = requests.get('http://192.168.8.132:8000/data/', json_dump)
+        content = response.content
+        print(content)
+        json_data = response.json()
+        print(json_data)
 
     def get_serial(self):
         output = subprocess.check_output(["sudo", "lshw"])
