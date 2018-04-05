@@ -9,19 +9,24 @@ import os
 class App:
     textbox_dict = {}
     finishing_data_dict = {}
-    license_value = None
-    camera_value = None
     tester_value = None
     computer_type = None
 
+
     def __init__(self, master):
+        self.camera_var = StringVar(master)
+        self.license_var = StringVar(master)
+        self.camera_var.set(infocollector.camera.get_value())
+        self.license_var.set(infocollector.license.get_value())
         upperframe = Frame(master)
         self.add_menubar(upperframe)
         self.add_labels(upperframe)
         upperframe.pack()
+        if infocollector.message != "":
+            self.warning_popup(infocollector.message)
 
     def add_labels(self, upperframe):
-        data = infocollector.get_data()
+        # data = infocollector.get_data()
         self.form_specs_frame(upperframe)
         self.form_screen_frame(upperframe)
         self.form_rest_frame(upperframe)
@@ -79,17 +84,15 @@ class App:
         if (infoholder.get_title() == "License"):
             inner_frame = Frame(frame)
             inner_frame.grid(column=column, row=row + 1, sticky="nw")
-            license_var = StringVar()
-            checkbox1 = Radiobutton(inner_frame, text='W7', variable=license_var, value="W7", command=lambda: self.set_license("W7")).grid(column=0, row=0)
-            checkbox2 = Radiobutton(inner_frame, text='W8', variable=license_var, value="W8", command=lambda: self.set_license("W8")).grid(column=0, row=1)
-            checkbox3 = Radiobutton(inner_frame, text='W10', variable=license_var, value="W10", command=lambda: self.set_license("W10")).grid(column=1, row=0)
-            checkbox4 = Radiobutton(inner_frame, text='N/A', variable=license_var, value="N/A", command=lambda: self.set_license("N/A")).grid(column=1, row=1)
+            checkbox1 = Radiobutton(inner_frame, text="W7", variable=self.license_var, value="W7").grid(column=0, row=0)
+            checkbox2 = Radiobutton(inner_frame, text="W8", variable=self.license_var, value="W8").grid(column=0, row=1)
+            checkbox3 = Radiobutton(inner_frame, text="W10", variable=self.license_var, value="W10").grid(column=1, row=0)
+            checkbox4 = Radiobutton(inner_frame, text="N/A", variable=self.license_var, value="N/A").grid(column=1, row=1)
         elif (infoholder.get_title() == "Camera"):
             inner_frame = Frame(frame)
             inner_frame.grid(column=column, row=row + 1, sticky="nw")
-            camera_var = StringVar()
-            checkbox10 = Radiobutton(inner_frame, text='Yes', variable=camera_var, value="Yes", command=lambda: self.set_camera("Yes")).pack(side=LEFT)
-            checkbox11 = Radiobutton(inner_frame, text='No', variable=camera_var, value="No", command=lambda: self.set_camera("No")).pack(side=LEFT)
+            checkbox10 = Radiobutton(inner_frame, text='Yes', variable=self.camera_var, value="Yes").pack(side=LEFT)
+            checkbox11 = Radiobutton(inner_frame, text='No', variable=self.camera_var, value="No").pack(side=LEFT)
         elif (infoholder.get_title() == "Other"):
             text = Text(frame, height=4, width=textbox_width*3)
             text.insert(END, infoholder.get_value())
@@ -100,12 +103,6 @@ class App:
             text.insert(END, infoholder.get_value())
             text.grid(column=column, row=row + 1, padx=6, pady=(0, 6), sticky="n")
             self.textbox_dict[infoholder.get_title()] = text
-
-    def set_license(self, value):
-        self.license_value = value
-
-    def set_camera(self, value):
-        self.camera_value = value
 
     def get_grid_coordinate(self, index):
         rowlimit=10
@@ -171,10 +168,10 @@ class App:
 
     def check_data_filling(self):
         warning_text = ""
-        if self.license_value == None:
-            warning_text += "License has not been selected \r\n"
-        if self.camera_value == None:
-            warning_text += "Camera option has not been selected \r\n"
+        #if self.license_value == None:
+        #    warning_text += "License has not been selected \r\n"
+        # if self.camera_value == None:
+        #     warning_text += "Camera option has not been selected \r\n"
         for key, textbox in self.textbox_dict.items():
             if key == "BIOS":
                 if textbox == "":
@@ -196,8 +193,10 @@ class App:
 
     def warning_popup(self, text):
         toplevel = Toplevel()
-        scrollbar = Scrollbar(toplevel)
+        scrollbar = Scrollbar(toplevel, orient=VERTICAL)
         scrollbar.pack(side=RIGHT, fill=Y)
+        # vsf = VerticalScrolledFrame()
+        # scrollbar.config(command=)
         label = Label(toplevel, text=text, fg="red")
         label.pack()
 
@@ -218,9 +217,6 @@ class App:
 
     def set_tester(self, tester, stringvar, popup):
         popup.destroy()
-        # print("stringvar")
-        # print(stringvar.get())
-        # var = stringvar.get()
         if tester == "" and stringvar.get() == "":
             self.warning_popup("Neither employee identity was entered, nor  computer type selected")
         elif tester == "":
@@ -238,8 +234,11 @@ class App:
                 self.finishing_data_dict[key] = value
             else:
                 self.finishing_data_dict[key] = value.get("1.0", "end-1c").rstrip()
-        self.finishing_data_dict["License"] = self.license_value
-        self.finishing_data_dict["Camera"] = self.camera_value
+        # self.finishing_data_dict["License"] = self.license_value
+        print(self.license_var.get())
+        self.finishing_data_dict["License"] = self.license_var.get()
+        print(self.camera_var.get())
+        self.finishing_data_dict["Camera"] = self.camera_var.get()
         self.finishing_data_dict["Tester"] = self.tester_value
         self.finishing_data_dict["Computer type"] = self.computer_type
         request = infocollector.send_dict(self.finishing_data_dict)
@@ -253,28 +252,12 @@ class App:
         label = Label(toplevel, text=text, fg="green", font="bold")
         label.pack(side=TOP)
 
-    def print_gui_objects(self):
-        index = 0
-        for key, textbox in self.textbox_dict.items():
-            if key == "BIOS":
-                print(str(index) + " - " + key + ": " + textbox)
-            else:
-                print(str(index)+" - "+key + ": "+textbox.get("1.0", "end-1c").rstrip())
-            index += 1
-        print(str(index)+" - License: "+str(self.license_value))
-        index += 1
-        print(str(index)+" - Camera: "+str(self.camera_value))
-        index += 1
-        print(str(index) + " - Tester: " + str(self.tester_value))
-
     def add_menubar(self, frame):
         menubar = Menu(frame)
 
-        file_menu = Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Sound Interfaces", command=self.sound_interface_control)
-        file_menu.add_command(label="Debug option", command=self.print_gui_objects)
-        file_menu.add_command(label="[Placeholder]")
-        menubar.add_cascade(label="File", menu=file_menu)
+        control_menu = Menu(menubar, tearoff=0)
+        control_menu.add_command(label="Sound Interfaces", command=self.sound_interface_control)
+        menubar.add_cascade(label="File", menu=control_menu)
 
         testing_menu = Menu(menubar, tearoff=0)
         testing_menu.add_command(label="Camera", command=self.cheese_camera)
@@ -292,7 +275,9 @@ class App:
         program_menu.add_command(label="sysinfo", command=self.sysinfo)
         menubar.add_cascade(label="Programs", menu=program_menu)
 
-        menubar.add_command(label="Last step", command=self.last_step)
+        menubar.add_command(label="<<Last step>>", command=self.last_step)
+        if not infocollector.is_connectable:
+            menubar.entryconfig("<<Last step>>", state="disabled")
 
         root.config(menu=menubar)
 
@@ -303,4 +288,5 @@ root = Tk()
 app = App(root)
 
 root.mainloop()
-root.destroy()
+# root.destroy()
+root.quit()

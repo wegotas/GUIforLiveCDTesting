@@ -36,6 +36,8 @@ class InfoCollectorClass:
                         ("Radeon", "")]
 
     def __init__(self):
+        self.message = ""
+        self.is_connectable = False
         self.serial = InfoHolderClass("Serial", self.get_serial())
         self.manufacturer = InfoHolderClass("Manufacturer", self.get_manufacturer("Manufacturer"))
         self.model = InfoHolderClass("Model", self.get_model("Model"))
@@ -47,20 +49,20 @@ class InfoCollectorClass:
         self.diagonal = InfoHolderClass("Diagonal", display_dict['diagonal'])
         self.resolution = InfoHolderClass("Resolution", display_dict['resolution'])
         self.category = InfoHolderClass("Category", display_dict['category'])
-        self.license = InfoHolderClass("License", "")
-        self.camera = InfoHolderClass("Camera", "")
 
-        self.get_data_from_server()
-        self.cover = InfoHolderClass("Cover", "")
-        self.display = InfoHolderClass("Display", "")
-        self.bezel = InfoHolderClass("Bezel", "")
-        self.keyboard = InfoHolderClass("Keyboard", "")
-        self.mouse = InfoHolderClass("Mouse", "")
-        self.sound = InfoHolderClass("Sound", "")
-        self.cdrom = InfoHolderClass("CD-ROM", "")
-        self.hdd_cover = InfoHolderClass("HDD Cover", "")
-        self.ram_cover = InfoHolderClass("RAM Cover", "")
-        self.other = InfoHolderClass("Other", "")
+        cover, display, bezel, keyboard, mouse, sound, cdrom, hdd_cover, ram_cover, other, license, camera = self.get_data_from_server()
+        self.license = InfoHolderClass("License", license)
+        self.camera = InfoHolderClass("Camera", camera)
+        self.cover = InfoHolderClass("Cover", cover)
+        self.display = InfoHolderClass("Display", display)
+        self.bezel = InfoHolderClass("Bezel", bezel)
+        self.keyboard = InfoHolderClass("Keyboard", keyboard)
+        self.mouse = InfoHolderClass("Mouse", mouse)
+        self.sound = InfoHolderClass("Sound", sound)
+        self.cdrom = InfoHolderClass("CD-ROM", cdrom)
+        self.hdd_cover = InfoHolderClass("HDD Cover", hdd_cover)
+        self.ram_cover = InfoHolderClass("RAM Cover", ram_cover)
+        self.other = InfoHolderClass("Other", other)
 
         self.tester = InfoHolderClass("Tester", "")
         self.comouter_type = InfoHolderClass("Computer type", "")
@@ -85,17 +87,34 @@ class InfoCollectorClass:
         self.bat2_expected_time = InfoHolderClass('Bat2 expected time', bt2_expected_time)
         self.bat2_serial = InfoHolderClass('Bat2 serial', bt2_serial)
 
+
     def get_data_from_server(self):
-        request_dict = {}
+        request_dict = dict()
         request_dict[self.serial.get_title()] = self.serial.get_value()
-        print(request_dict)
-        json_dump = json.dumps(request_dict)
-        print(json_dump)
-        response = requests.get('http://192.168.8.132:8000/data/', json_dump)
-        content = response.content
-        print(content)
-        json_data = response.json()
-        print(json_data)
+        try:
+            json_dump = json.dumps(request_dict)
+            response = requests.get('http://192.168.8.132:8000/data/', json_dump)
+            print("status_code is " + str(response.status_code))
+            if response.status_code == 200:
+                json_data = response.json()
+                self.is_connectable = True
+                return json_data["Cover"], json_data["Display"], json_data["Bezel"], json_data["Keyboard"], \
+                       json_data["Mouse"], json_data["Sound"], json_data["CD-ROM"], json_data["HDD Cover"], \
+                       json_data["RAM Cover"], json_data["Other"], json_data["License"], json_data["Camera"]
+            else:
+                self.is_connectable = True
+                if response.content.decode('utf-8') == "No such computer":
+                    self.is_connectable = True
+                    return "", "", "", "", "", "", "", "", "", "", "", ""
+                else:
+                    self.message = "Failure on the server side:\n" + response.content.decode('utf-8')
+                    return "", "", "", "", "", "", "", "", "", "", "", ""
+        except Exception as e:
+            self.is_connectable = False
+            self.message = "Failed to connect to the server.\n" \
+                           "Check if server is running and all cables are connected\n" \
+                           "Or error on the server side.\nError message:\n\n"+str(e)
+            return "", "", "", "", "", "", "", "", "", "", "", ""
 
     def get_serial(self):
         output = subprocess.check_output(["sudo", "lshw"])
