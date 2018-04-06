@@ -26,7 +26,6 @@ class App:
             self.warning_popup(infocollector.message)
 
     def add_labels(self, upperframe):
-        # data = infocollector.get_data()
         self.form_specs_frame(upperframe)
         self.form_screen_frame(upperframe)
         self.form_rest_frame(upperframe)
