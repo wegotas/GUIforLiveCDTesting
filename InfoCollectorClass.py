@@ -38,6 +38,10 @@ class InfoCollectorClass:
     def __init__(self):
         self.message = ""
         self.is_connectable = False
+
+        # self.aux_data = dict()
+        self.aux_data = self.get_aux_data()
+
         self.serial = InfoHolderClass("Serial", self.get_serial())
         self.manufacturer = InfoHolderClass("Manufacturer", self.get_manufacturer("Manufacturer"))
         self.model = InfoHolderClass("Model", self.get_model("Model"))
@@ -87,6 +91,9 @@ class InfoCollectorClass:
         self.bat2_expected_time = InfoHolderClass('Bat2 expected time', bt2_expected_time)
         self.bat2_serial = InfoHolderClass('Bat2 serial', bt2_serial)
 
+    def get_aux_data(self):
+        response = requests.get('http://192.168.8.132:8000/if/aux_data/')
+        return response.json()
 
     def get_data_from_server(self):
         request_dict = dict()
@@ -357,7 +364,7 @@ class InfoCollectorClass:
 
         json_data = json.dumps(dict)
         print(json_data)
-        r = requests.post('http://192.168.8.132:8000/data/', json_data)
+        r = requests.post('http://192.168.8.132:8000/if/data/', json_data)
         print("Status code: "+str(r.status_code))
         print("Reason: "+str(r.reason))
         print("Content: "+str(r.content))

@@ -16,6 +16,11 @@ class App:
     def __init__(self, master):
         self.camera_var = StringVar(master)
         self.license_var = StringVar(master)
+
+        self.tester_var = StringVar()
+        self.type_var = StringVar()
+        self.category_var = StringVar()
+
         self.camera_var.set(infocollector.camera.get_value())
         self.license_var.set(infocollector.license.get_value())
         upperframe = Frame(master)
@@ -194,8 +199,6 @@ class App:
         toplevel = Toplevel()
         scrollbar = Scrollbar(toplevel, orient=VERTICAL)
         scrollbar.pack(side=RIGHT, fill=Y)
-        # vsf = VerticalScrolledFrame()
-        # scrollbar.config(command=)
         label = Label(toplevel, text=text, fg="red")
         label.pack()
 
@@ -204,27 +207,35 @@ class App:
         toplevel = Toplevel()
         label = Label(toplevel, text="Enter your identity:", fg="blue")
         label.pack()
-        text = Text(toplevel, height=1, width=20)
-        text.pack()
+        tester_menu = OptionMenu(toplevel, self.tester_var, *infocollector.aux_data['tes_dict'].values())
+        tester_menu.pack()
+
         label = Label(toplevel, text="Choose computer type:", fg="blue")
         label.pack()
-        stringvar = StringVar()
-        option_menu = OptionMenu(toplevel, stringvar, "stationary", "laptop")
-        option_menu.pack()
-        button = Button(toplevel, text="Send data", command=lambda: self.set_tester(text.get("1.0", "end-1c").rstrip(), stringvar, toplevel))
+        type_menu = OptionMenu(toplevel, self.type_var, *infocollector.aux_data['typ_dict'].values())
+        type_menu.pack()
+
+        label = Label(toplevel, text="Choose category to assign to:", fg="blue")
+        label.pack()
+        category_menu = OptionMenu(toplevel, self.category_var, *infocollector.aux_data['cat_dict'].values())
+        category_menu.pack()
+
+        button = Button(toplevel, text="Send data", command=lambda: self.set_tester(toplevel))
         button.pack()
 
-    def set_tester(self, tester, stringvar, popup):
+    def set_tester(self, popup):
         popup.destroy()
-        if tester == "" and stringvar.get() == "":
-            self.warning_popup("Neither employee identity was entered, nor  computer type selected")
-        elif tester == "":
-            self.warning_popup("No employee tab no. entered")
-        elif stringvar.get() == "":
-            self.warning_popup("No computer type was selected")
+        text = ""
+        if self.tester_var.get() == "":
+            text += "Tester was not selected\n"
+        if self.type_var.get() == "":
+            text += "Computer type was not selected\n"
+        if self.category_var.get() == "":
+            text += "Computer category to assign to was not selected"
+
+        if text != "":
+            self.warning_popup(text)
         else:
-            self.computer_type = stringvar.get()
-            self.tester_value = tester
             self.form_finishing_data_dict()
 
     def form_finishing_data_dict(self):
@@ -233,13 +244,15 @@ class App:
                 self.finishing_data_dict[key] = value
             else:
                 self.finishing_data_dict[key] = value.get("1.0", "end-1c").rstrip()
-        # self.finishing_data_dict["License"] = self.license_value
         print(self.license_var.get())
         self.finishing_data_dict["License"] = self.license_var.get()
         print(self.camera_var.get())
         self.finishing_data_dict["Camera"] = self.camera_var.get()
-        self.finishing_data_dict["Tester"] = self.tester_value
-        self.finishing_data_dict["Computer type"] = self.computer_type
+        # self.finishing_data_dict["Tester"] = self.tester_value
+        # self.finishing_data_dict["Computer type"] = self.computer_type
+        self.finishing_data_dict["Tester"] = self.tester_var.get()
+        self.finishing_data_dict["Computer type"] = self.type_var.get()
+        self.finishing_data_dict["Category"] = self.category_var.get()
         request = infocollector.send_dict(self.finishing_data_dict)
         if request.status_code == 200:
             self.succesful(request.content)
