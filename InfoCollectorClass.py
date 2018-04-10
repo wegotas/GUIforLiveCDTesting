@@ -38,6 +38,8 @@ class InfoCollectorClass:
     def __init__(self):
         self.message = ""
         self.is_connectable = False
+        self.provide_message = False
+        self.succesful_connection = False
 
         # self.aux_data = dict()
         self.aux_data = self.get_aux_data()
@@ -100,11 +102,14 @@ class InfoCollectorClass:
         request_dict[self.serial.get_title()] = self.serial.get_value()
         try:
             json_dump = json.dumps(request_dict)
-            response = requests.get('http://192.168.8.132:8000/data/', json_dump)
+            response = requests.get('http://192.168.8.132:8000/if/data/', json_dump)
             print("status_code is " + str(response.status_code))
             if response.status_code == 200:
                 json_data = response.json()
+                self.message = "Existing record has been found and data filled in"
                 self.is_connectable = True
+                self.provide_message = True
+                self.succesful_connection = True
                 return json_data["Cover"], json_data["Display"], json_data["Bezel"], json_data["Keyboard"], \
                        json_data["Mouse"], json_data["Sound"], json_data["CD-ROM"], json_data["HDD Cover"], \
                        json_data["RAM Cover"], json_data["Other"], json_data["License"], json_data["Camera"]
@@ -112,12 +117,19 @@ class InfoCollectorClass:
                 self.is_connectable = True
                 if response.content.decode('utf-8') == "No such computer":
                     self.is_connectable = True
+                    self.succesful_connection = True
+                    self.provide_message = False
                     return "", "", "", "", "", "", "", "", "", "", "", ""
                 else:
+                    self.is_connectable = True
+                    self.succesful_connection = False
+                    self.provide_message = True
                     self.message = "Failure on the server side:\n" + response.content.decode('utf-8')
                     return "", "", "", "", "", "", "", "", "", "", "", ""
         except Exception as e:
             self.is_connectable = False
+            self.succesful_connection = False
+            self.provide_message = True
             self.message = "Failed to connect to the server.\n" \
                            "Check if server is running and all cables are connected\n" \
                            "Or error on the server side.\nError message:\n\n"+str(e)

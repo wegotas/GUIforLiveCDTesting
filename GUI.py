@@ -27,8 +27,11 @@ class App:
         self.add_menubar(upperframe)
         self.add_labels(upperframe)
         upperframe.pack()
-        if infocollector.message != "":
-            self.warning_popup(infocollector.message)
+        if infocollector.provide_message:
+            if not infocollector.succesful_connection:
+                self.warning_popup(infocollector.message)
+            else:
+                self.succesful(infocollector.message)
 
     def add_labels(self, upperframe):
         self.form_specs_frame(upperframe)
@@ -194,6 +197,17 @@ class App:
             self.warning_popup(warning)
         else:
             self.employee_id()
+
+    def check_if_exists(self):
+        request_dict = dict()
+        request_dict[infocollector.serial.get_title()] = infocollector.serial.get_value()
+        try:
+            json_dump = json.dumps(request_dict)
+            response = requests.get('http://192.168.8.132:8000/if/exists/', json_dump)
+            print("status_code is " + str(response.status_code))
+        except Exception as e:
+            # SIA DALI REIKIA DAR ISGALVOTI IR SUTVARKYTI
+            print("Something has gone wrong")
 
     def warning_popup(self, text):
         toplevel = Toplevel()
