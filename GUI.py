@@ -175,10 +175,10 @@ class App:
 
     def check_data_filling(self):
         warning_text = ""
-        #if self.license_value == None:
-        #    warning_text += "License has not been selected \r\n"
-        # if self.camera_value == None:
-        #     warning_text += "Camera option has not been selected \r\n"
+        if self.license_var.get() == "":
+            warning_text += "License has not been selected \r\n"
+        if self.camera_var.get() == "":
+            warning_text += "Camera option has not been selected \r\n"
         for key, textbox in self.textbox_dict.items():
             if key == "BIOS":
                 if textbox == "":
@@ -203,11 +203,33 @@ class App:
         request_dict[infocollector.serial.get_title()] = infocollector.serial.get_value()
         try:
             json_dump = json.dumps(request_dict)
+            print(json_dump)
             response = requests.get('http://192.168.8.132:8000/if/exists/', json_dump)
-            print("status_code is " + str(response.status_code))
+            print("status_code for record with serial "+infocollector.serial.get_value()+" existance is "
+                  + str(response.status_code))
+            if response.status_code == 200:
+                self.confirmation_window()
+            else:
+                self.employee_id()
         except Exception as e:
-            # SIA DALI REIKIA DAR ISGALVOTI IR SUTVARKYTI
             print("Something has gone wrong")
+            self.warning_popup(str(e))
+
+    def confirmation_window(self):
+        toplevel = Toplevel()
+        text = "Record with serial" + infocollector.serial.get_value().strip() + " allready exists in database."
+        label = Label(toplevel, text=text)
+        label.grid(column=0, row=0, columnspan=2)
+        label2 = Label(toplevel, text="Do you really want to overwrite it?", fg="red")
+        label2.grid(column=0, row=1, columnspan=2)
+
+        # button = Button(toplevel, text="Confirm", command=lambda: self.employee_id(toplevel), fg="red")
+        button = Button(toplevel, text="Confirm", command=lambda: self.form_finishing_data_dict(toplevel), fg="red")
+        button.grid(column=0, row=2)
+
+        button = Button(toplevel, text="Cancel", command=lambda: toplevel.destroy())
+        button.grid(column=1, row=2)
+
 
     def warning_popup(self, text):
         toplevel = Toplevel()
@@ -219,7 +241,7 @@ class App:
 
     def employee_id(self):
         toplevel = Toplevel()
-        label = Label(toplevel, text="Enter your identity:", fg="blue")
+        label = Label(toplevel, text="Choose your identity:", fg="blue")
         label.pack()
         tester_menu = OptionMenu(toplevel, self.tester_var, *infocollector.aux_data['tes_dict'].values())
         tester_menu.pack()
@@ -237,6 +259,7 @@ class App:
         button = Button(toplevel, text="Send data", command=lambda: self.set_tester(toplevel))
         button.pack()
 
+
     def set_tester(self, popup):
         popup.destroy()
         text = ""
@@ -250,20 +273,17 @@ class App:
         if text != "":
             self.warning_popup(text)
         else:
-            self.form_finishing_data_dict()
+            self.check_if_exists()
 
-    def form_finishing_data_dict(self):
+    def form_finishing_data_dict(self, toplevel):
+        toplevel.destroy()
         for key, value in self.textbox_dict.items():
             if key == "BIOS":
                 self.finishing_data_dict[key] = value
             else:
                 self.finishing_data_dict[key] = value.get("1.0", "end-1c").rstrip()
-        print(self.license_var.get())
         self.finishing_data_dict["License"] = self.license_var.get()
-        print(self.camera_var.get())
         self.finishing_data_dict["Camera"] = self.camera_var.get()
-        # self.finishing_data_dict["Tester"] = self.tester_value
-        # self.finishing_data_dict["Computer type"] = self.computer_type
         self.finishing_data_dict["Tester"] = self.tester_var.get()
         self.finishing_data_dict["Computer type"] = self.type_var.get()
         self.finishing_data_dict["Category"] = self.category_var.get()

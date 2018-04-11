@@ -40,8 +40,6 @@ class InfoCollectorClass:
         self.is_connectable = False
         self.provide_message = False
         self.succesful_connection = False
-
-        # self.aux_data = dict()
         self.aux_data = self.get_aux_data()
 
         self.serial = InfoHolderClass("Serial", self.get_serial())
@@ -94,8 +92,15 @@ class InfoCollectorClass:
         self.bat2_serial = InfoHolderClass('Bat2 serial', bt2_serial)
 
     def get_aux_data(self):
-        response = requests.get('http://192.168.8.132:8000/if/aux_data/')
-        return response.json()
+        try:
+            response = requests.get('http://192.168.8.132:8000/if/aux_data/')
+            return response.json()
+        except Exception as e:
+            self.message = "Failed to fetch auxiliary data\n"
+            self.provide_message = True
+            self.is_connectable = False
+            self.succesful_connection = False
+            return None
 
     def get_data_from_server(self):
         request_dict = dict()
@@ -106,7 +111,7 @@ class InfoCollectorClass:
             print("status_code is " + str(response.status_code))
             if response.status_code == 200:
                 json_data = response.json()
-                self.message = "Existing record has been found and data filled in"
+                self.message = "Existing record has been found and data filled in form"
                 self.is_connectable = True
                 self.provide_message = True
                 self.succesful_connection = True
