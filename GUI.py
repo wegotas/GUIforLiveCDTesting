@@ -210,7 +210,7 @@ class App:
             if response.status_code == 200:
                 self.confirmation_window()
             else:
-                self.employee_id()
+                self.form_finishing_data_dict(None)
         except Exception as e:
             print("Something has gone wrong")
             self.warning_popup(str(e))
@@ -276,7 +276,8 @@ class App:
             self.check_if_exists()
 
     def form_finishing_data_dict(self, toplevel):
-        toplevel.destroy()
+        if toplevel is not None:
+            toplevel.destroy()
         for key, value in self.textbox_dict.items():
             if key == "BIOS":
                 self.finishing_data_dict[key] = value
