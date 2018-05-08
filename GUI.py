@@ -204,7 +204,8 @@ class App:
         try:
             json_dump = json.dumps(request_dict)
             print(json_dump)
-            response = requests.get('http://192.168.8.132:8000/if/exists/', json_dump)
+            # response = requests.get('http://192.168.8.132:8000/if/exists/', json_dump)
+            response = requests.get('http://192.168.2.1:8000/if/exists/', json_dump)
             print("status_code for record with serial "+infocollector.serial.get_value()+" existance is "
                   + str(response.status_code))
             if response.status_code == 200:
