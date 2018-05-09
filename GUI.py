@@ -223,11 +223,8 @@ class App:
         label.grid(column=0, row=0, columnspan=2)
         label2 = Label(toplevel, text="Do you really want to overwrite it?", fg="red")
         label2.grid(column=0, row=1, columnspan=2)
-
-        # button = Button(toplevel, text="Confirm", command=lambda: self.employee_id(toplevel), fg="red")
         button = Button(toplevel, text="Confirm", command=lambda: self.form_finishing_data_dict(toplevel), fg="red")
         button.grid(column=0, row=2)
-
         button = Button(toplevel, text="Cancel", command=lambda: toplevel.destroy())
         button.grid(column=1, row=2)
 
@@ -246,17 +243,14 @@ class App:
         label.pack()
         tester_menu = OptionMenu(toplevel, self.tester_var, *infocollector.aux_data['tes_dict'].values())
         tester_menu.pack()
-
         label = Label(toplevel, text="Choose computer type:", fg="blue")
         label.pack()
         type_menu = OptionMenu(toplevel, self.type_var, *infocollector.aux_data['typ_dict'].values())
         type_menu.pack()
-
         label = Label(toplevel, text="Choose category to assign to:", fg="blue")
         label.pack()
         category_menu = OptionMenu(toplevel, self.category_var, *infocollector.aux_data['cat_dict'].values())
         category_menu.pack()
-
         button = Button(toplevel, text="Send data", command=lambda: self.set_tester(toplevel))
         button.pack()
 
@@ -270,7 +264,6 @@ class App:
             text += "Computer type was not selected\n"
         if self.category_var.get() == "":
             text += "Computer category to assign to was not selected"
-
         if text != "":
             self.warning_popup(text)
         else:

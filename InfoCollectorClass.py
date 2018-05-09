@@ -375,26 +375,21 @@ class InfoCollectorClass:
 
     def send_dict(self, dict):
         dict[self.motherboard_serial.get_title()] = self.motherboard_serial.get_value()
-
         dict[self.hdd_serial1.get_title()] = self.hdd_serial1.get_value()
         dict[self.hdd_serial2.get_title()] = self.hdd_serial2.get_value()
         dict[self.hdd_serial3.get_title()] = self.hdd_serial3.get_value()
-
         dict[self.ram_serial1.get_title()] = self.ram_serial1.get_value()
         dict[self.ram_serial2.get_title()] = self.ram_serial2.get_value()
         dict[self.ram_serial3.get_title()] = self.ram_serial3.get_value()
         dict[self.ram_serial4.get_title()] = self.ram_serial4.get_value()
         dict[self.ram_serial5.get_title()] = self.ram_serial5.get_value()
         dict[self.ram_serial6.get_title()] = self.ram_serial6.get_value()
-
         dict[self.bat1_wear.get_title()] = self.bat1_wear.get_value()
         dict[self.bat1_expected_time.get_title()] = self.bat1_expected_time.get_value()
         dict[self.bat1_serial.get_title()] = self.bat1_serial.get_value()
         dict[self.bat2_wear.get_title()] = self.bat2_wear.get_value()
         dict[self.bat2_expected_time.get_title()] = self.bat2_expected_time.get_value()
         dict[self.bat2_serial.get_title()] = self.bat2_serial.get_value()
-
-
         json_data = json.dumps(dict)
         print(json_data)
         # r = requests.post('http://192.168.8.132:8000/if/data/', json_data)
