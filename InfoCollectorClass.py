@@ -216,14 +216,14 @@ class InfoCollectorClass:
             if 'Intel' in gpustring:
                 text += 'Intel'
             elif "RADEON" in gpustring.upper():
-                gpuPattern = re.compile('[0-1]+M')
+                gpuPattern = re.compile('[0-9]+[A-Za-z]?')
                 lowerGPU = re.findall(gpuPattern, gpustring)[0]
                 text += "Radeon " + lowerGPU
             elif 'ATI' in gpustring:
                 text += 'ATI'
             elif ('NVIDIA' in gpustring) and ('[' in gpustring) and (']' in gpustring):
                 gpu_strings_list = self.replace_strings(title, gpustring).split("[")
-                text += "NVIDIA" + gpu_strings_list[len(gpu_strings_list)-1].replace("GeForce", "").replace("]", "")\
+                text += "NVIDIA " + gpu_strings_list[len(gpu_strings_list)-1].replace("GeForce", "").replace("]", "")\
                     .replace("NVIDIA", "").strip()
             else:
                 text += self.replace_strings(title, gpustring)
@@ -232,7 +232,7 @@ class InfoCollectorClass:
     def form_display_dict(self):
         display_dict = {}
         variable = subprocess.check_output(["xrandr"])
-        pattern = re.compile(b'.*connected.*')
+        pattern = re.compile(b'.* connected.*')
         result = re.findall(pattern, variable)[0].decode('utf-8')
         diagonal = self.get_diagonal(result)
         display_dict.update({"diagonal": diagonal})
