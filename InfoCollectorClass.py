@@ -19,7 +19,9 @@ class InfoCollectorClass:
                           ("Latitude", ""),
                           ("EasyNote", ""),
                           ("LIFEBOOK", ""),
-                          ("ProBook", "")]
+                          ("ProBook", ""),
+                          ("Aspire", ""),
+                          ("ThinkPad", "")]
 
     cpu_replacements = [("@", ""),
                         ("Intel(R)", ""),
@@ -159,9 +161,15 @@ class InfoCollectorClass:
         return self.replace_strings(title, text)
 
     def get_model(self, title):
-        variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "'Product Name: '"])
-        pattern = re.compile(b'Product Name: (.+?)\\n\\t')
-        text = re.findall(pattern, variable)[0].decode('utf-8')
+        text = "N/A"
+        if self.manufacturer.get_value().upper() == "LENOVO":
+            variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "Version"])
+            pattern = re.compile(b'Version: (.+?)\\n\\t')
+            text = re.findall(pattern, variable)[1].decode("utf-8")
+        else:
+            variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "'Product Name: '"])
+            pattern = re.compile(b'Product Name: (.+?)\\n\\t')
+            text = re.findall(pattern, variable)[0].decode('utf-8')
         return self.replace_strings(title, text)
 
     def get_cpu(self, title):
@@ -207,6 +215,10 @@ class InfoCollectorClass:
                 text += " | "
             if 'Intel' in gpustring:
                 text += 'Intel'
+            elif "RADEON" in gpustring.upper():
+                gpuPattern = re.compile('[0-1]+M')
+                lowerGPU = re.findall(gpuPattern, gpustring)[0]
+                text += "Radeon " + lowerGPU
             elif 'ATI' in gpustring:
                 text += 'ATI'
             elif ('NVIDIA' in gpustring) and ('[' in gpustring) and (']' in gpustring):
@@ -337,7 +349,9 @@ class InfoCollectorClass:
             expected_time = "Wear out is wrong. Can't determine expected time"
         serial_pat = re.compile(b'.*serial.*')
         serial_string = re.findall(serial_pat, output)
-        serial = serial_string[0].decode('utf-8').split(':')[1].strip()
+        serial = "N/A"
+        if len(serial_string) > 0:
+            serial = serial_string[0].decode('utf-8').split(':')[1].strip()
         if "hp" in self.manufacturer.get_value().lower():
             wear = "HP battery wear is unreliable"
             expected_time = "HP expected battery operation time is unreliable"
