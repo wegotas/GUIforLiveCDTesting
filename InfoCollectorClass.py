@@ -38,6 +38,11 @@ class InfoCollectorClass:
                         ("Radeon", "")]
 
     def __init__(self):
+        # Laptop's server IP
+        self.domain = "http://192.168.8.132:8000/"
+
+        # Server computer's IP
+        # self.domain = "http://192.168.2.1:8000/"
         self.message = ""
         self.is_connectable = False
         self.provide_message = False
@@ -96,7 +101,8 @@ class InfoCollectorClass:
     def get_aux_data(self):
         try:
             # response = requests.get('http://192.168.8.132:8000/if/aux_data/')
-            response = requests.get('http://192.168.2.1:8000/if/aux_data/')
+            # response = requests.get('http://192.168.2.1:8000/if/aux_data/')
+            response = requests.get(self.domain + 'if/aux_data/')
             return response.json()
         except Exception as e:
             self.message = "Failed to fetch auxiliary data\n"
@@ -111,7 +117,8 @@ class InfoCollectorClass:
         try:
             json_dump = json.dumps(request_dict)
             # response = requests.get('http://192.168.8.132:8000/if/data/', json_dump)
-            response = requests.get('http://192.168.2.1:8000/if/data/', json_dump)
+            # response = requests.get('http://192.168.2.1:8000/if/data/', json_dump)
+            response = requests.get(self.domain + 'if/data/', json_dump)
             print("status_code is " + str(response.status_code))
             if response.status_code == 200:
                 json_data = response.json()
@@ -393,7 +400,8 @@ class InfoCollectorClass:
         json_data = json.dumps(dict)
         print(json_data)
         # r = requests.post('http://192.168.8.132:8000/if/data/', json_data)
-        r = requests.post('http://192.168.2.1:8000/if/data/', json_data)
+        # r = requests.post('http://192.168.2.1:8000/if/data/', json_data)
+        r = requests.post(self.domain + 'if/data/', json_data)
         print("Status code: "+str(r.status_code))
         print("Reason: "+str(r.reason))
         print("Content: "+str(r.content))
