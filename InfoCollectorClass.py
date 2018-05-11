@@ -76,7 +76,7 @@ class InfoCollectorClass:
         self.other = InfoHolderClass("Other", other)
 
         self.tester = InfoHolderClass("Tester", "")
-        self.comouter_type = InfoHolderClass("Computer type", "")
+        self.computer_type = InfoHolderClass("Computer type", "")
         self.bios = InfoHolderClass("BIOS", "N/A")
         hdd_serial1, hdd_serial2, hdd_serial3 = self.get_hdd_serials()
         self.hdd_serial1 = InfoHolderClass('hdd_serial1', hdd_serial1)
@@ -397,6 +397,7 @@ class InfoCollectorClass:
         dict[self.bat2_wear.get_title()] = self.bat2_wear.get_value()
         dict[self.bat2_expected_time.get_title()] = self.bat2_expected_time.get_value()
         dict[self.bat2_serial.get_title()] = self.bat2_serial.get_value()
+        dict[self.bios.get_title()] = self.bios.get_value()
         json_data = json.dumps(dict)
         print(json_data)
         # r = requests.post('http://192.168.8.132:8000/if/data/', json_data)

@@ -16,6 +16,9 @@ class App:
     def __init__(self, master):
         self.camera_var = StringVar(master)
         self.license_var = StringVar(master)
+        self.client = ""
+        self.price = ""
+        self.isSoldVar = BooleanVar()
 
         self.tester_var = StringVar()
         self.type_var = StringVar()
@@ -229,7 +232,6 @@ class App:
         button = Button(toplevel, text="Cancel", command=lambda: toplevel.destroy())
         button.grid(column=1, row=2)
 
-
     def warning_popup(self, text):
         toplevel = Toplevel()
         scrollbar = Scrollbar(toplevel, orient=VERTICAL)
@@ -240,6 +242,7 @@ class App:
 
     def employee_id(self):
         toplevel = Toplevel()
+        toplevel.children_dict = dict()
         label = Label(toplevel, text="Choose your identity:", fg="blue")
         label.pack()
         tester_menu = OptionMenu(toplevel, self.tester_var, *infocollector.aux_data['tes_dict'].values())
@@ -252,19 +255,65 @@ class App:
         label.pack()
         category_menu = OptionMenu(toplevel, self.category_var, *infocollector.aux_data['cat_dict'].values())
         category_menu.pack()
-        button = Button(toplevel, text="Send data", command=lambda: self.set_tester(toplevel))
+        sold_status = IntVar()
+        checkbutton = Checkbutton(toplevel, text="This computer is sold", variable=self.isSoldVar, command=lambda: self.disable_sold(self.isSoldVar, [clientText, priceText]))
+        checkbutton.pack()
+        clientLabel = Label(toplevel, text="Client:", fg="blue")
+        clientLabel.pack()
+        clientText = Text(toplevel, height=1, width=20)
+        clientText.pack()
+        clientText.insert(INSERT, self.client)
+        if not self.isSoldVar.get():
+            clientText.config(state=DISABLED, bg="gray75")
+        toplevel.children_dict["clientText"] = clientText
+        priceLabel = Label(toplevel, text="Price:", fg="blue")
+        priceLabel.pack()
+        priceText = Text(toplevel, height=1, width=20)
+        priceText.pack()
+        priceText.insert(INSERT, self.price)
+        if not self.isSoldVar.get():
+            priceText.config(state=DISABLED, bg="gray75")
+        toplevel.children_dict["priceText"] = priceText
+        # priceText.config(state=DISABLED)
+        button = Button(toplevel, text="Send data", command=lambda: self.validate_last_step(toplevel))
         button.pack()
 
+    def disable_sold(self, intvar, element_list):
+        self.isSoldVar.set(intvar.get() > 0)
+        self.disable_elements(self.isSoldVar.get(), element_list)
 
-    def set_tester(self, popup):
-        popup.destroy()
+    def disable_elements(self, disable_flag, element_list):
+        for element in element_list:
+            if disable_flag:
+                element.config(state=NORMAL, bg="white")
+            elif not disable_flag:
+                element.config(state=DISABLED, bg="gray75")
+
+    def validate_last_step(self, popup):
+        # print(popup.children_dict)
+        # print(popup.children)
+
+        self.client = popup.children_dict["clientText"].get("1.0", "end-1c")
+        self.price = popup.children_dict["priceText"].get("1.0", "end-1c")
+        print(self.client)
+        print(self.price)
         text = ""
+        if self.isSoldVar.get():
+            if self.client == "":
+                text += "Client is not set\n"
+            if self.price == "":
+                text += "Price is not set\n"
+            else:
+                pattern = re.compile("[0-9]{1,8}[\,\.]?[0-9]{0,2}")
+                if not pattern.fullmatch(self.price):
+                    text += "Price entered does not conform to the rule 'number[1-8].number[0-2]'"
         if self.tester_var.get() == "":
             text += "Tester was not selected\n"
         if self.type_var.get() == "":
             text += "Computer type was not selected\n"
         if self.category_var.get() == "":
             text += "Computer category to assign to was not selected"
+        popup.destroy()
         if text != "":
             self.warning_popup(text)
         else:
@@ -275,7 +324,8 @@ class App:
             toplevel.destroy()
         for key, value in self.textbox_dict.items():
             if key == "BIOS":
-                self.finishing_data_dict[key] = value
+                # self.finishing_data_dict[key] = value
+                continue
             else:
                 self.finishing_data_dict[key] = value.get("1.0", "end-1c").rstrip()
         self.finishing_data_dict["License"] = self.license_var.get()
@@ -283,6 +333,9 @@ class App:
         self.finishing_data_dict["Tester"] = self.tester_var.get()
         self.finishing_data_dict["Computer type"] = self.type_var.get()
         self.finishing_data_dict["Category"] = self.category_var.get()
+        self.finishing_data_dict["IsSold"] = self.isSoldVar.get()
+        self.finishing_data_dict["Client"] = self.client
+        self.finishing_data_dict["Price"] = self.price
         request = infocollector.send_dict(self.finishing_data_dict)
         if request.status_code == 200:
             self.succesful(request.content)
