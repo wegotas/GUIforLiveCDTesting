@@ -152,154 +152,199 @@ class InfoCollectorClass:
             return "", "", "", "", "", "", "", "", "", "", "", ""
 
     def get_serial(self):
-        output = subprocess.check_output(["sudo", "lshw"])
-        pattern = re.compile(b'\\n.*serial.*\\n')
-        splitted_text = re.findall(pattern, output)[0].decode('utf-8').split(' ')
-        return splitted_text[splitted_text.index("serial:")+1]
+        try:
+            output = subprocess.check_output(["sudo", "lshw"])
+            pattern = re.compile(b'\\n.*serial.*\\n')
+            splitted_text = re.findall(pattern, output)[0].decode('utf-8').split(' ')
+            return splitted_text[splitted_text.index("serial:")+1]
+        except:
+            return ""
 
     def get_manufacturer(self, title):
         variable = subprocess.check_output(["sudo", "dmidecode", "-t", "chassis", "|", "grep", "'Manufacturer:'"])
         pattern = re.compile(b'Manufacturer: (.+?)\\n\\t')
-        text = re.findall(pattern, variable)[0].decode('utf-8')
-        if "samsung" in text.lower():
-            return "Samsung"
-        if "asus" in text.lower():
-            return "ASUS"
-        return self.replace_strings(title, text)
+        try:
+            text = re.findall(pattern, variable)[0].decode('utf-8')
+            if "samsung" in text.lower():
+                return "Samsung"
+            if "asus" in text.lower():
+                return "ASUS"
+            return self.replace_strings(title, text)
+        except:
+            return ''
 
     def get_model(self, title):
-        text = "N/A"
-        if self.manufacturer.get_value().upper() == "LENOVO":
-            variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "Version"])
-            pattern = re.compile(b'Version: (.+?)\\n\\t')
-            text = re.findall(pattern, variable)[1].decode("utf-8")
-        else:
-            variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "'Product Name: '"])
-            pattern = re.compile(b'Product Name: (.+?)\\n\\t')
-            text = re.findall(pattern, variable)[0].decode('utf-8')
-        return self.replace_strings(title, text)
+        try:
+            text = "N/A"
+            if self.manufacturer.get_value().upper() == "LENOVO":
+                variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "Version"])
+                pattern = re.compile(b'Version: (.+?)\\n\\t')
+                text = re.findall(pattern, variable)[1].decode("utf-8")
+            else:
+                variable = subprocess.check_output(["sudo", "dmidecode", "|", "grep", "'Product Name: '"])
+                pattern = re.compile(b'Product Name: (.+?)\\n\\t')
+                text = re.findall(pattern, variable)[0].decode('utf-8')
+            return self.replace_strings(title, text)
+        except:
+            return ""
 
     def get_cpu(self, title):
         variable = subprocess.check_output(["lscpu"])
         pattern = re.compile(b'Model name: (.+?)\\n')
-        text = re.findall(pattern, variable)[0].decode('utf-8')
-        return self.replace_strings(title, text)
+        try:
+            text = re.findall(pattern, variable)[0].decode('utf-8')
+            return self.replace_strings(title, text)
+        except:
+            return ""
 
     def get_ram(self):
         variable = subprocess.check_output(["sudo", "lshw", "-C", "memory"])
         pattern1 = re.compile(b'size: (.+?)GiB\\n')
-        result1 = re.search(pattern1, variable).group(1).decode('utf-8') + "GB"
+        try:
+            result1 = re.search(pattern1, variable).group(1).decode('utf-8') + "GB"
+        except:
+            result1 = ""
         pattern2 = re.compile(b'DDR[0-9]+')
-        result2 = re.findall(pattern2, variable)[0].decode('utf-8')
+        try:
+            result2 = re.findall(pattern2, variable)[0].decode('utf-8')
+        except:
+            result2 = ""
         return result1 + " " + result2
 
     def get_ram_serials(self):
         ram_serial_list = []
         output = subprocess.check_output(['sudo', 'lshw', '-C', 'memory'])
         pattern = re.compile(b'serial:.*')
-        result = re.findall(pattern, output)
-        for i in range(6):
-            if i < len(result):
-                ram_serial_list.append(self.process_serial_ramstring(result[i]))
-            else:
-                ram_serial_list.append('N/A')
-        return ram_serial_list
+        try:
+            result = re.findall(pattern, output)
+            for i in range(6):
+                if i < len(result):
+                    ram_serial_list.append(self.process_serial_ramstring(result[i]))
+                else:
+                    ram_serial_list.append('N/A')
+            return ram_serial_list
+        except:
+            return ['N/A']
 
     def process_serial_ramstring(self, ramstring):
-        if b'empty' in ramstring.lower():
+        try:
+            if b'empty' in ramstring.lower():
+                return 'N/A'
+            else:
+                return ramstring.decode('utf-8').split(':')[1].strip()
+        except:
             return 'N/A'
-        else:
-            return ramstring.decode('utf-8').split(':')[1].strip()
 
     def get_gpu(self, title):
         variable = subprocess.check_output(["lspci"])
         pattern = re.compile(b' VGA (.+)\\n')
-        gpus = re.findall(pattern, variable)
-        text = ""
-        for gpu in gpus:
-            gpustring = gpu.decode('utf-8')
-            if text != "":
-                text += " | "
-            if 'Intel' in gpustring:
-                text += 'Intel'
-            elif "RADEON" in gpustring.upper():
-                gpuPattern = re.compile('[0-9]+[A-Za-z]?')
-                lowerGPU = re.findall(gpuPattern, gpustring)[0]
-                text += "Radeon " + lowerGPU
-            elif 'ATI' in gpustring:
-                text += 'ATI'
-            elif ('NVIDIA' in gpustring) and ('[' in gpustring) and (']' in gpustring):
-                gpu_strings_list = self.replace_strings(title, gpustring).split("[")
-                text += "NVIDIA " + gpu_strings_list[len(gpu_strings_list)-1].replace("GeForce", "").replace("]", "")\
+        try:
+            gpus = re.findall(pattern, variable)
+            text = ""
+            for gpu in gpus:
+                gpustring = gpu.decode('utf-8')
+                if text != "":
+                    text += " | "
+                if 'Intel' in gpustring:
+                    text += 'Intel'
+                elif "RADEON" in gpustring.upper():
+                    gpuPattern = re.compile('[0-9]+[A-Za-z]?')
+                    lowerGPU = re.findall(gpuPattern, gpustring)[0]
+                    text += "Radeon " + lowerGPU
+                elif 'ATI' in gpustring:
+                    text += 'ATI'
+                elif ('NVIDIA' in gpustring) and ('[' in gpustring) and (']' in gpustring):
+                    gpu_strings_list = self.replace_strings(title, gpustring).split("[")
+                    text += "NVIDIA " + gpu_strings_list[len(gpu_strings_list)-1].replace("GeForce", "").replace("]", "")\
                     .replace("NVIDIA", "").strip()
-            else:
-                text += self.replace_strings(title, gpustring)
-        return text
+                else:
+                    text += self.replace_strings(title, gpustring)
+            return text
+        except:
+            return ""
 
     def form_display_dict(self):
         display_dict = {}
         variable = subprocess.check_output(["xrandr"])
         pattern = re.compile(b'.* connected.*')
-        result = re.findall(pattern, variable)[0].decode('utf-8')
-        diagonal = self.get_diagonal(result)
-        display_dict.update({"diagonal": diagonal})
-        resolution = self.get_resolution(result)
-        display_dict.update({"resolution": resolution})
-        category = self.get_resolution_category(resolution)
-        display_dict.update({"category": category})
-        return display_dict
+        try:
+            result = re.findall(pattern, variable)[0].decode('utf-8')
+            diagonal = self.get_diagonal(result)
+            display_dict.update({"diagonal": diagonal})
+            resolution = self.get_resolution(result)
+            display_dict.update({"resolution": resolution})
+            category = self.get_resolution_category(resolution)
+            display_dict.update({"category": category})
+            return display_dict
+        except:
+            display_dict.update({"diagonal": ""})
+            display_dict.update({"resolution": ""})
+            display_dict.update({"category": ""})
+            return display_dict
 
     def get_diagonal(self, stat_string):
-        patdim = '[0-9]+mm x [0-9]+mm'
-        dimstr = re.findall(patdim, stat_string)[0]
-        dim_arr = dimstr.replace("mm", "").replace(" ", "").split("x")
-        diag = str(
-            round(
-                math.sqrt(
-                    (int(dim_arr[0]) / 25.4) ** 2 + (int(dim_arr[1]) / 25.4) ** 2
-                )
-                , 1)
-        )
-        return diag+'"'
+        try:
+            patdim = '[0-9]+mm x [0-9]+mm'
+            dimstr = re.findall(patdim, stat_string)[0]
+            dim_arr = dimstr.replace("mm", "").replace(" ", "").split("x")
+            diag = str(
+                round(
+                    math.sqrt(
+                        (int(dim_arr[0]) / 25.4) ** 2 + (int(dim_arr[1]) / 25.4) ** 2
+                    )
+                    , 1)
+            )
+            return diag+'"'
+        except:
+            return ""
 
     def get_resolution(self, stat_string):
-        respat = " [0-9]+x[0-9]+"
-        res = re.findall(respat, stat_string)[0]
-        return res
+        try:
+            respat = " [0-9]+x[0-9]+"
+            res = re.findall(respat, stat_string)[0]
+            return res
+        except:
+            return ""
 
     def get_resolution_category(self, res):
-        px = int(res.split('x')[1])
-        if (px < 720):
-            return "N/A"
-        elif (px < 1080):
-            return "HD"
-        elif (px < 1440):
-            return "Full HD"
-        elif (px < 1536):
-            return "Quad HD"
-        elif (px < 2160):
-            return "2000"
-        elif (px < 2540):
-            return "2160p/4K UHD"
-        elif (px < 3072):
-            return "2540p"
-        elif (px < 4320):
-            return "4000p"
-        elif (px >= 4320):
-            return "4320p/8K UHD"
+        try:
+            px = int(res.split('x')[1])
+            if (px < 720):
+                return "N/A"
+            elif (px < 1080):
+                return "HD"
+            elif (px < 1440):
+                return "Full HD"
+            elif (px < 1536):
+                return "Quad HD"
+            elif (px < 2160):
+                return "2000"
+            elif (px < 2540):
+                return "2160p/4K UHD"
+            elif (px < 3072):
+                return "2540p"
+            elif (px < 4320):
+                return "4000p"
+            elif (px >= 4320):
+                return "4320p/8K UHD"
+        except:
+            return ""
 
     def get_hdd(self):
         variable = subprocess.check_output(["sudo", "lshw", "-class", "disk", "-class", "storage"])
         pattern = re.compile(b'[0-9]+GB')
-        result = re.findall(pattern, variable)
-        if result:
-            text = ""
-            for member in result:
-                if text != "":
-                    text = " - "
-                text += member.decode('utf-8')
-            return text
-        return "0"
+        try:
+            result = re.findall(pattern, variable)
+            if result:
+                text = ""
+                for member in result:
+                    if text != "":
+                        text = " - "
+                    text += member.decode('utf-8')
+                return text
+            return "0"
+        except:
+            return ""
 
     def get_hdd_serials(self):
         hdd_serial1 = 'N/A'
@@ -307,7 +352,10 @@ class InfoCollectorClass:
         hdd_serial3 = 'N/A'
         output = subprocess.check_output(['lsblk', '-o', 'NAME,SERIAL'])
         pattern = re.compile(b'.*sd. .*')
-        result = re.findall(pattern, output)
+        try:
+            result = re.findall(pattern, output)
+        except:
+            return hdd_serial1, hdd_serial2, hdd_serial3
         if len(result) > 2:
             hdd_serial3 = re.sub(' +', ' ', result[2].decode('utf-8').strip()).split(' ')[1]
         if len(result) > 1:
@@ -319,8 +367,11 @@ class InfoCollectorClass:
     def get_motherboard_serial(self):
         output = subprocess.check_output(['sudo', 'dmidecode', '-t', '2'])
         pattern = re.compile(b'Serial.*')
-        result = re.findall(pattern, output)
-        return result[0].decode('utf-8').split(':')[1].strip()
+        try:
+            result = re.findall(pattern, output)
+            return result[0].decode('utf-8').split(':')[1].strip()
+        except:
+            return ""
 
     def get_batteries_info(self):
         bat1_wear = 'N/A'
@@ -330,13 +381,16 @@ class InfoCollectorClass:
         bat1_serial = 'N/A'
         bat2_serial = 'N/A'
         output = subprocess.check_output(['upower', '-e'])
-        pattern = re.compile(b'.*batt.*')
-        result = re.findall(pattern, output)
-        if len(result) > 0:
-            bat1_wear, bat1_expected_time, bat1_serial = self.process_battery(result[0])
-        if len(result) > 1:
-            bat2_wear, bat2_expected_time, bat2_serial = self.process_battery(result[1])
-        return bat1_wear, bat1_expected_time, bat1_serial, bat2_wear, bat2_expected_time, bat2_serial
+        try:
+            pattern = re.compile(b'.*batt.*')
+            result = re.findall(pattern, output)
+            if len(result) > 0:
+                bat1_wear, bat1_expected_time, bat1_serial = self.process_battery(result[0])
+            if len(result) > 1:
+                bat2_wear, bat2_expected_time, bat2_serial = self.process_battery(result[1])
+            return bat1_wear, bat1_expected_time, bat1_serial, bat2_wear, bat2_expected_time, bat2_serial
+        except:
+            return bat1_wear, bat1_expected_time, bat1_serial, bat2_wear, bat2_expected_time, bat2_serial
 
     def process_battery(self, battery):
         output = subprocess.check_output(['upower', '-i', battery])

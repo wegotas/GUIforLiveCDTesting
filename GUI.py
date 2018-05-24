@@ -245,15 +245,24 @@ class App:
         toplevel.children_dict = dict()
         label = Label(toplevel, text="Choose your identity:", fg="blue")
         label.pack()
-        tester_menu = OptionMenu(toplevel, self.tester_var, *infocollector.aux_data['tes_dict'].values())
+        identity_list = list(infocollector.aux_data['tes_dict'].values())
+        identity_list.sort()
+        # tester_menu = OptionMenu(toplevel, self.tester_var, *infocollector.aux_data['tes_dict'].values())
+        tester_menu = OptionMenu(toplevel, self.tester_var, *identity_list)
         tester_menu.pack()
         label = Label(toplevel, text="Choose computer type:", fg="blue")
         label.pack()
-        type_menu = OptionMenu(toplevel, self.type_var, *infocollector.aux_data['typ_dict'].values())
+        type_list = list(infocollector.aux_data['typ_dict'].values())
+        type_list.sort()
+        # type_menu = OptionMenu(toplevel, self.type_var, *infocollector.aux_data['typ_dict'].values())
+        type_menu = OptionMenu(toplevel, self.type_var, *type_list)
         type_menu.pack()
         label = Label(toplevel, text="Choose category to assign to:", fg="blue")
         label.pack()
-        category_menu = OptionMenu(toplevel, self.category_var, *infocollector.aux_data['cat_dict'].values())
+        category_list = list(infocollector.aux_data['cat_dict'].values())
+        category_list.sort()
+        # category_menu = OptionMenu(toplevel, self.category_var, *infocollector.aux_data['cat_dict'].values())
+        category_menu = OptionMenu(toplevel, self.category_var, *category_list)
         category_menu.pack()
         sold_status = IntVar()
         checkbutton = Checkbutton(toplevel, text="This computer is sold", variable=self.isSoldVar, command=lambda: self.disable_sold(self.isSoldVar, [clientText, priceText]))
@@ -290,13 +299,8 @@ class App:
                 element.config(state=DISABLED, bg="gray75")
 
     def validate_last_step(self, popup):
-        # print(popup.children_dict)
-        # print(popup.children)
-
         self.client = popup.children_dict["clientText"].get("1.0", "end-1c")
         self.price = popup.children_dict["priceText"].get("1.0", "end-1c")
-        print(self.client)
-        print(self.price)
         text = ""
         if self.isSoldVar.get():
             if self.client == "":
